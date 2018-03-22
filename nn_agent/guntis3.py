@@ -41,7 +41,6 @@ optimizer = optim.RMSprop(policy.parameters(), lr=1e-3)
 # in 480x640x3
 # out 60x80x1
 def prepro(I):    
-  print('Preprocessing')
   I = I[::8,::8,1] # downsample by factor of 2, choose colour 2 to improve visibility in other games   
   # I[I == 17] = 0 # erase background (background type 1)   
   # I[I == 192] = 0 # erase background (background type 2)   

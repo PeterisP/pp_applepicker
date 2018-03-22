@@ -63,7 +63,7 @@ class NNAgent(object):
         while not self.new_image:
             time.sleep(0.1) 
         self.new_image = False
-        print('Received image data is: %s %s' % (self.image_array.shape, self.image_array.dtype))
+        # print('Received image data is: %s %s' % (self.image_array.shape, self.image_array.dtype))
         return self.image_array
 
     def image_callback(self, msg):
@@ -94,38 +94,36 @@ class NNAgent(object):
         self.observe = True
         return self.get_observation()
 
+    def closest_apple(self):
+        model_coordinates = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
+        blockName = str(self.turtlebot._name)
+        turtlebot_coordinates = model_coordinates(blockName, self.turtlebot._relative_entity_name)
+        
+        distanceList = []
+        distanceMin = 10
+        for i in range (0,9):
+            apple = Block('cricket_ball_'+str(i), 'link')
+            blockName = str(apple._name)
+            apple_coordinates = model_coordinates(blockName, apple._relative_entity_name)
+            distance = math.sqrt(math.pow(turtlebot_coordinates.pose.position.x - apple_coordinates.pose.position.x,2)+math.pow(turtlebot_coordinates.pose.position.y - apple_coordinates.pose.position.y,2)+math.pow(turtlebot_coordinates.pose.position.z - apple_coordinates.pose.position.z,2))
+            print '\n'      
+            distanceList.append(distance)
+        distanceMin = min(distanceList)
+        numberMin = distanceList.index(min(distanceList))
+        return distanceMin, numberMin
+
     def try_to_pick_up_apple(self):
         reward = 0
-        print('trying to pick up apple')
         try:
-            model_coordinates = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
-            blockName = str(self.turtlebot._name)
-            turtlebot_coordinates = model_coordinates(blockName, self.turtlebot._relative_entity_name)
-            print(blockName)
-            print(turtlebot_coordinates.pose.position)
-            
-            distanceList = []
-            distanceMin = 10
             distanceLim = 0.25 #We should define the minimum distance to apple, where robot can pick up 
-            for i in range (0,9):
-                apple = Block('cricket_ball_'+str(i), 'link')
-                blockName = str(apple._name)
-                apple_coordinates = model_coordinates(blockName, apple._relative_entity_name)
-                distance = math.sqrt(math.pow(turtlebot_coordinates.pose.position.x - apple_coordinates.pose.position.x,2)+math.pow(turtlebot_coordinates.pose.position.y - apple_coordinates.pose.position.y,2)+math.pow(turtlebot_coordinates.pose.position.z - apple_coordinates.pose.position.z,2))
-                print '\n'      
-                distanceList.append(distance)
-            print (distanceList)
-            distanceMin = min(distanceList)
-            numberMin = distanceList.index(min(distanceList))
-            print '\n'
-            print ('Minimal distance = '+str(distanceMin)) 
-            print '\n'
+            distanceMin, numberMin = self.closest_apple()
+            print('Trying to pick up apple - distance %.2f, minimum to succeed %.2f' % (distanceMin, distanceLim))
             if distanceMin <= distanceLim: 
                 #delete_model = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
                 new_model_state = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
                 model_state = ModelState()
                 apple_name = 'cricket_ball_'+str(numberMin)
-                print (apple_name)
+                print ('Picked %s' % apple_name)
                 model_state.model_name = apple_name
                 twist = Twist()
                 twist.linear.x = 0
@@ -186,7 +184,8 @@ class NNAgent(object):
             print(e)
 
     def envstep(self, action):
-        print('Envstep runnning: ', action)
+        distance_before, _ = self.closest_apple()
+        print("Envstep runnning: '%s'" % action)
         x = 0
         th = 0
         reward = 0
@@ -203,10 +202,13 @@ class NNAgent(object):
         twist.angular.x = 0;
         twist.angular.y = 0;
         twist.angular.z = th
-        print(twist)            
         self.steps_to_stop = 4
-        self.cmd_publisher.publish(twist)    
-        return (self.get_observation(), reward, False, 0)
+        self.cmd_publisher.publish(twist)  
+        observation = self.get_observation()        
+        distance_after, _ = self.closest_apple()  
+        reward = reward + distance_before - distance_after
+        print('Closest apple was %.2f, is %.2f. Offered reward %.2f' % (distance_before, distance_after, reward))
+        return (observation, reward, False, 0)
 
 if __name__ == '__main__':
     try:
