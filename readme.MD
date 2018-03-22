@@ -1,5 +1,19 @@
-docker build -t pp_applepicker ./
+1. Simple
 
-docker run -it -p 6080:80 pp_applepicker
+Pull latest changes and build docker image
 
-http://127.0.0.1:6080
+    $ ./update.sh
+
+Run docker images
+
+    $ ./run.sh
+
+
+
+2. Or more detailed
+
+    $ docker build -t pp_applepicker .
+
+    $ docker run -it -p 6080:80 pp_applepicker
+
+  Open [http://127.0.0.1:6080](http://127.0.0.1:6080)
