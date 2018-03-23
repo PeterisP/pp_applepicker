@@ -75,7 +75,7 @@ class NNAgent(object):
         if self.steps_to_stop:
             self.steps_to_stop -= 1
             if not self.steps_to_stop:
-                print('Stopping')
+                # print('Stopping')
                 twist = Twist()
                 twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0;
                 twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0;            
@@ -106,7 +106,7 @@ class NNAgent(object):
             blockName = str(apple._name)
             apple_coordinates = model_coordinates(blockName, apple._relative_entity_name)
             distance = math.sqrt(math.pow(turtlebot_coordinates.pose.position.x - apple_coordinates.pose.position.x,2)+math.pow(turtlebot_coordinates.pose.position.y - apple_coordinates.pose.position.y,2)+math.pow(turtlebot_coordinates.pose.position.z - apple_coordinates.pose.position.z,2))
-            print '\n'      
+            # print '\n'
             distanceList.append(distance)
         distanceMin = min(distanceList)
         numberMin = distanceList.index(min(distanceList))
@@ -115,7 +115,7 @@ class NNAgent(object):
     def try_to_pick_up_apple(self):
         reward = 0
         try:
-            distanceLim = 0.25 #We should define the minimum distance to apple, where robot can pick up 
+            distanceLim = 0.35 #We should define the minimum distance to apple, where robot can pick up
             distanceMin, numberMin = self.closest_apple()
             print('Trying to pick up apple - distance %.2f, minimum to succeed %.2f' % (distanceMin, distanceLim))
             if distanceMin <= distanceLim: 

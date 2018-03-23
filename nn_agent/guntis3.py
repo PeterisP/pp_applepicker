@@ -9,10 +9,10 @@ import torch.autograd as autograd
 from torch.autograd import Variable
 from torch.utils.data import TensorDataset, DataLoader
 
-gamma, seed, batch = 0.99, 543, 10
+gamma, seed, batch = 0.99, 543, 1
 #D = 105*80
 D=60*80
-episode_length = 10
+episode_length = 30
 
 valid_actions = ['i','j','l',',','p']
 torch.manual_seed(seed)
@@ -48,27 +48,8 @@ def prepro(I):
   I[I != 0] = 1 # everything else (paddles, ball) just set to 1 
   # plt.imshow(I) 
   # plt.show()
-  return I.astype(np.float).ravel() # 2D array to 1D array (vector)   
+  return I.astype(np.float).ravel() # 2D array to 1D array (vector)
 
-def finish_episode():
-    R = 0
-    rewards = []
-    for r in policy.rewards[::-1]:
-        if r != 0: R = 0 # reset the sum, since this was a game boundary (pong specific!)   
-        R = r + gamma * R
-        rewards.insert(0, R)
-    #print (rewards)
-    rewards = torch.Tensor(rewards) # .cuda()
-    rewards = (rewards - rewards.mean()) # / (rewards.std() + np.finfo(np.float32).eps)  
-    tmp = rewards.std()  
-    if tmp > 0.0 : rewards /= tmp #fixed occasional zero-divide   
-    for action, r in zip(policy.saved_actions, rewards):
-        action.reinforce(r)
-    optimizer.zero_grad()
-    autograd.backward(policy.saved_actions, [None for _ in policy.saved_actions])
-    optimizer.step()
-    del policy.rewards[:]
-    del policy.saved_actions[:]
 
 def run_episodic_learning(env_reset, env_step):
     running_reward = None 
@@ -85,11 +66,13 @@ def run_episodic_learning(env_reset, env_step):
             state = torch.from_numpy(state).float().unsqueeze(0)
             # probs = policy(Variable(state).cuda())
             probs = policy(Variable(state))
-            actiong = probs.multinomial()
-            policy.saved_actions.append(actiong)
+            # actiong = probs.multinomial()
+            m = torch.distributions.Categorical(probs)
+            actiong = m.sample()
             action = actiong.data
+            policy.saved_actions.append(m.log_prob(actiong))
             
-            observation, reward, done, _ = env_step(valid_actions[action[0,0]]) 
+            observation, reward, done, _ = env_step(valid_actions[action[0]])
             reward_sum += reward 
             policy.rewards.append(reward)
 
@@ -103,5 +86,30 @@ def run_episodic_learning(env_reset, env_step):
         if episode_number % batch == 0:
             print('Episode {}\tLast length: {:5d}\tAverage length: {:.2f}'.format(
                 episode_number, t, running_reward))
-            finish_episode()
+            # finish_episode()
+
+            R = 0
+            rewards = []
+            loss = []
+            for r in policy.rewards[::-1]:
+                # if r != 0: R = 0 # reset the sum, since this was a game boundary (pong specific!)
+                R = r + gamma * R
+                rewards.insert(0, R)
+#print (rewards)
+            rewards = torch.Tensor(rewards) # .cuda()
+            rewards = (rewards - rewards.mean()) # / (rewards.std() + np.finfo(np.float32).eps)
+            tmp = rewards.std()
+            if tmp > 0.0 : rewards /= tmp #fixed occasional zero-divide
+            for action, r in zip(policy.saved_actions, rewards):
+                # action.reinforce(r)
+                loss.append(-action * r)
+            optimizer.zero_grad()
+            loss = torch.cat(loss).sum()
+            # autograd.backward(policy.saved_actions, [None for _ in policy.saved_actions])
+            # loss.backward(policy.saved_actions, [None for _ in policy.saved_actions])
+            loss.backward()
+            optimizer.step()
+
+            del policy.rewards[:]
+            del policy.saved_actions[:]
 
