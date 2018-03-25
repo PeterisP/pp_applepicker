@@ -12,9 +12,10 @@ from torch.utils.data import TensorDataset, DataLoader
 gamma, seed, batch = 0.99, 543, 1
 #D = 105*80
 D=60*80
-episode_length = 30
+episode_length = 20
 
-valid_actions = ['i','j','l',',','p']
+# valid_actions = ['i','j','l',',','p']
+valid_actions = ['i','j','l','p']
 torch.manual_seed(seed)
 
 class Policy(nn.Module):
@@ -55,6 +56,7 @@ def run_episodic_learning(env_reset, env_step):
     running_reward = None 
     for episode_number in count(1):
         observation = env_reset() 
+        observation, reward, done, _ = env_step('j')
         prev_x = None # used in computing the difference frame    
         reward_sum = 0  
          
@@ -80,7 +82,7 @@ def run_episodic_learning(env_reset, env_step):
                 break
 
         accumulate = min([episode_number, 10])
-        running_reward = reward_sum if running_reward is None else running_reward * (1-1/accumulate) + reward_sum * (1/accumulate)
+        running_reward = reward_sum if running_reward is None else running_reward * (1.0-1.0/accumulate) + reward_sum * (1.0/accumulate)
         print ('episode: {}, reward: {}, mean reward: {:3f}'.format(episode_number, reward_sum, running_reward))
         
         if episode_number % batch == 0:

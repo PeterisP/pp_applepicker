@@ -101,7 +101,8 @@ class NNAgent(object):
         
         distanceList = []
         distanceMin = 10
-        for i in range (0,9):
+        #for i in range (0,9):
+        for i in range (1,2):
             apple = Block('cricket_ball_'+str(i), 'link')
             blockName = str(apple._name)
             apple_coordinates = model_coordinates(blockName, apple._relative_entity_name)
@@ -115,7 +116,7 @@ class NNAgent(object):
     def try_to_pick_up_apple(self):
         reward = 0
         try:
-            distanceLim = 0.35 #We should define the minimum distance to apple, where robot can pick up
+            distanceLim = 0.50 #We should define the minimum distance to apple, where robot can pick up
             distanceMin, numberMin = self.closest_apple()
             print('Trying to pick up apple - distance %.2f, minimum to succeed %.2f' % (distanceMin, distanceLim))
             if distanceMin <= distanceLim: 
@@ -147,8 +148,9 @@ class NNAgent(object):
                 new_apple_state = new_model_state(model_state)
                 reward = 1000
             else:
-                reward = -1
-                print ('You should come closer to the apple. Minimal distance = 0.25')
+                reward = 0
+                # reward = -1
+                print ('You should come closer to the apple. Minimal distance = 0.50')
         except rospy.ServiceException as e:
             rospy.loginfo("Get Model State service call failed:  {0}".format(e))
         return reward
@@ -206,7 +208,7 @@ class NNAgent(object):
         self.cmd_publisher.publish(twist)  
         observation = self.get_observation()        
         distance_after, _ = self.closest_apple()  
-        reward = reward + distance_before - distance_after
+        # reward = reward + distance_before - distance_after
         print('Closest apple was %.2f, is %.2f. Offered reward %.2f' % (distance_before, distance_after, reward))
         return (observation, reward, False, 0)
 
