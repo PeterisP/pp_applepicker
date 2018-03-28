@@ -46,7 +46,8 @@ def prepro(I):
   # I[I == 17] = 0 # erase background (background type 1)   
   # I[I == 192] = 0 # erase background (background type 2)   
   # I[I == 136] = 0 # erase background (background type 3)   
-  I[I != 0] = 1 # everything else (paddles, ball) just set to 1 
+  # I[I != 0] = 1 # everything else (paddles, ball) just set to 1
+  I = (I-128)/128
   # plt.imshow(I) 
   # plt.show()
   return I.astype(np.float).ravel() # 2D array to 1D array (vector)
@@ -56,7 +57,7 @@ def run_episodic_learning(env_reset, env_step):
     running_reward = None 
     for episode_number in count(1):
         observation = env_reset() 
-        observation, reward, done, _ = env_step('j')
+        # observation, reward, done, _ = env_step('j')
         prev_x = None # used in computing the difference frame    
         reward_sum = 0  
          
@@ -99,9 +100,9 @@ def run_episodic_learning(env_reset, env_step):
                 rewards.insert(0, R)
 #print (rewards)
             rewards = torch.Tensor(rewards) # .cuda()
-            rewards = (rewards - rewards.mean()) # / (rewards.std() + np.finfo(np.float32).eps)
-            tmp = rewards.std()
-            if tmp > 0.0 : rewards /= tmp #fixed occasional zero-divide
+            # rewards = (rewards - rewards.mean()) # / (rewards.std() + np.finfo(np.float32).eps)
+            # tmp = rewards.std()
+            # if tmp > 0.0 : rewards /= tmp #fixed occasional zero-divide
             for action, r in zip(policy.saved_actions, rewards):
                 # action.reinforce(r)
                 loss.append(-action * r)

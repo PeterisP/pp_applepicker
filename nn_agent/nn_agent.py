@@ -111,7 +111,7 @@ class NNAgent(object):
             distanceList.append(distance)
         distanceMin = min(distanceList)
         numberMin = distanceList.index(min(distanceList))
-        return distanceMin, numberMin
+        return distanceMin, 1 # numberMin
 
     def try_to_pick_up_apple(self):
         reward = 0
