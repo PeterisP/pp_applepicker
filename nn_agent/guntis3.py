@@ -9,6 +9,11 @@ import torch.autograd as autograd
 from torch.autograd import Variable
 from torch.utils.data import TensorDataset, DataLoader
 
+try:
+    from config import cuda
+except ImportError:
+    cuda = False
+
 gamma, seed, batch = 0.99, 543, 1
 #D = 105*80
 D=60*80
@@ -16,7 +21,6 @@ episode_length = 20
 
 # valid_actions = ['i','j','l',',','p']
 valid_actions = ['i','j','l','p']
-torch.manual_seed(seed)
 
 class Policy(nn.Module):
     def __init__(self):
@@ -34,9 +38,6 @@ class Policy(nn.Module):
         action_scores = self.affine2(x)
         return F.softmax(action_scores)
 
-policy = Policy()
-# policy.cuda()
-optimizer = optim.RMSprop(policy.parameters(), lr=1e-3)
 
 # Pagaidām (priekš Atari) sagaida 210 x 160 krāsainu attēlu
 # in 480x640x3
@@ -54,6 +55,12 @@ def prepro(I):
 
 
 def run_episodic_learning(env_reset, env_step):
+    # init
+    torch.manual_seed(seed)
+    policy = Policy()
+    if cuda: policy.cuda()
+    optimizer = optim.RMSprop(policy.parameters(), lr=1e-3)
+    # learning
     running_reward = None 
     for episode_number in count(1):
         observation = env_reset() 
@@ -67,8 +74,7 @@ def run_episodic_learning(env_reset, env_step):
             prev_x = cur_x  
 
             state = torch.from_numpy(state).float().unsqueeze(0)
-            # probs = policy(Variable(state).cuda())
-            probs = policy(Variable(state))
+            probs = policy(Variable(state).cuda() if cuda else Variable(state))
             # actiong = probs.multinomial()
             m = torch.distributions.Categorical(probs)
             actiong = m.sample()
@@ -98,8 +104,9 @@ def run_episodic_learning(env_reset, env_step):
                 # if r != 0: R = 0 # reset the sum, since this was a game boundary (pong specific!)
                 R = r + gamma * R
                 rewards.insert(0, R)
-#print (rewards)
-            rewards = torch.Tensor(rewards) # .cuda()
+            #print (rewards)
+            rewards = torch.Tensor(rewards)
+            if cuda: rewards = rewards.cuda()
             # rewards = (rewards - rewards.mean()) # / (rewards.std() + np.finfo(np.float32).eps)
             # tmp = rewards.std()
             # if tmp > 0.0 : rewards /= tmp #fixed occasional zero-divide

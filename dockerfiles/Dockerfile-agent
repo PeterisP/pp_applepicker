@@ -1,0 +1,31 @@
+# vim: set filetype=dockerfile:
+
+FROM naurislv/apple_picking_robot
+
+RUN apt-get install -y python-pip
+RUN pip install --upgrade pip
+
+# Install CPU only version of PyTorch
+RUN test -z CUDA_VERSION && \
+	pip install http://download.pytorch.org/whl/cpu/torch-0.3.1-cp27-cp27mu-linux_x86_64.whl || true
+# Install CUDA version of PyTorch
+RUN test -n CUDA_VERSION && \
+	pip install http://download.pytorch.org/whl/cu91/torch-0.3.1-cp27-cp27mu-linux_x86_64.whl || true
+RUN pip install torchvision
+
+# apple_picking_robot project root directory
+
+# pull latest changes
+RUN git pull
+
+# build the project
+RUN /bin/bash -c 'source /opt/ros/$ROS_DISTRO/setup.bash; catkin_make'
+
+# COPY go.sh .
+COPY nn_agent ./src/nn_agent
+COPY project.launch ./launch/
+COPY apple_dbaby.world ./src/turtlebot3_gazebo/models/
+COPY turtlebot3_burger.gazebo.xacro ./src/turtlebot3/turtlebot3_description/urdf
+
+# enable cuda
+RUN test -n CUDA_VERSION && echo "cuda = True" >> ./src/nn_agent/config.py || true
