@@ -1,0 +1,38 @@
+# vim: set filetype=dockerfile:
+
+FROM ubuntu:xenial
+
+ARG HEADLESS_DISPLAY=0
+ENV HEADLESS_DISPLAY ${HEADLESS_DISPLAY:-0}
+
+RUN apt update
+
+# Install headless NVIDIA Xorg
+RUN apt install -y xserver-xorg-core libxv1 x11-xserver-utils
+
+# Install VirtualGL
+# RUN apt install -y curl
+# RUN curl -L -o /tmp/virtualgl_2.5.2_amd64.deb 'https://downloads.sourceforge.net/project/virtualgl/2.5.2/virtualgl_2.5.2_amd64.deb?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fvirtualgl%2Ffiles%2F2.5.2&ts=1509495317&use_mirror=auto'
+# RUN dpkg -i /tmp/virtualgl_2.5.2_amd64.deb
+# RUN printf "1\nn\nn\nn\nx\n" | /opt/VirtualGL/bin/vglserver_config
+
+# nvidia-xconfig --use-display-device=None --allow-empty-initial-configuration \
+#   --virtual=1920x1080 --mode=1920x1080 --no-use-edid-dpi -o xorg.conf.nvidia-headless
+COPY xorg.conf.nvidia-headless /etc/X11/xorg.conf
+
+# create startx script for starting X server manually
+RUN echo 'echo "Starting X server ..."\n\
+Xorg vt10 :${HEADLESS_DISPLAY} &\n\
+echo "X server log: /var/log/Xorg.0.log"\n\
+echo\n' > /usr/local/bin/startx
+RUN chmod +x /usr/local/bin/startx
+
+# nvidia-container-runtime
+# https://gitlab.com/nvidia/opengl/blob/ubuntu16.04/1.0-glvnd/runtime/Dockerfile
+# https://gitlab.com/nvidia/opengl/blob/ubuntu16.04/base/Dockerfile
+ENV NVIDIA_VISIBLE_DEVICES ${NVIDIA_VISIBLE_DEVICES:-all}
+ENV NVIDIA_DRIVER_CAPABILITIES compute,utility,video,graphics,compat32
+
+COPY entrypoint.sh /
+
+ENTRYPOINT ["/entrypoint.sh"]

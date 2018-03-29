@@ -1,0 +1,25 @@
+# vim: set filetype=dockerfile:
+
+FROM gazebo
+
+RUN apt-get install -y python-pip iputils-ping vim xvfb
+
+RUN pip install --upgrade pip
+RUN pip install imutils
+# RUN pip install imutils tensorflow
+
+WORKDIR /root
+RUN git clone https://github.com/Naurislv/apple_picking_robot.git --depth=1
+
+WORKDIR /root/apple_picking_robot/ros
+
+# for Terminal in VNC Desktop
+RUN echo >> /root/.bashrc && echo "cd /root/apple_picking_robot/ros" >> /root/.bashrc
+
+RUN echo >> /root/.bashrc && echo "source /opt/ros/\$ROS_DISTRO/setup.bash" >> /root/.bashrc
+RUN echo >> /root/.bashrc && echo "export ROS_IP=\$(hostname -I)" >> /root/.bashrc
+RUN echo >> /root/.bashrc && echo "export ROS_PACKAGE_PATH=/root/apple_picking_robot/ros:\$ROS_PACKAGE_PATH" >> /root/.bashrc
+
+COPY entrypoint.sh /
+
+ENTRYPOINT ["/entrypoint.sh"]

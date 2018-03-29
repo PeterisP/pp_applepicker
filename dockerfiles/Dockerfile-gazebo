@@ -1,0 +1,13 @@
+# vim: set filetype=dockerfile:
+
+FROM ros:kinetic-ros-core-xenial
+
+RUN apt-get update && apt-get install -y ros-kinetic-turtlebot*
+
+# Reference: http://gazebosim.org/tutorials?cat=install&tut=install_ubuntu&ver=7.0#Alternativeinstallation:step-by-step
+
+RUN sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
+RUN cat /etc/apt/sources.list.d/gazebo-stable.list
+# RUN wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
+RUN curl -s http://packages.osrfoundation.org/gazebo.key | apt-key add -
+RUN apt-get update && apt-get install -y gazebo7
