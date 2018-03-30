@@ -103,8 +103,8 @@ class NNAgent(object):
         
         distanceList = []
         distanceMin = 10
-        #for i in range (0,9):
-        for i in range (1,2):
+        for i in range (0,9):
+        # for i in range (1,2):
             apple = Block('cricket_ball_'+str(i), 'link')
             blockName = str(apple._name)
             apple_coordinates = model_coordinates(blockName, apple._relative_entity_name)
@@ -113,7 +113,7 @@ class NNAgent(object):
             distanceList.append(distance)
         distanceMin = min(distanceList)
         numberMin = distanceList.index(min(distanceList))
-        return distanceMin, 1 # numberMin
+        return distanceMin, numberMin
 
     def try_to_pick_up_apple(self):
         reward = 0

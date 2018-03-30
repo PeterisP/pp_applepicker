@@ -1,5 +1,9 @@
 #!/bin/bash
 
+vt=10
+
+[[ "$1" = vt* ]] && vt="${1#vt}" && shift
+
 args=(
 	# VirtualGL and Xorg forwarding settings
 	# -e VGL_COMPRESS=0
@@ -10,7 +14,7 @@ args=(
 	# -v $HOME/.Xauthority:/root/.Xauthority
 	# # --privileged
 	# --device=/dev/dri/card0
-	--device=/dev/tty10:rw
+	--device=/dev/tty$vt:rw
 	# --net=host 
 	-v /usr/lib/xorg/modules/drivers/nvidia_drv.so:/usr/lib/xorg/modules/drivers/nvidia_drv.so
 	-v `ls -1 /usr/lib/xorg/modules/extensions/libglx.so.*|head -n1`:/usr/lib/xorg/modules/extensions/libglx.so

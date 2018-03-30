@@ -28,4 +28,4 @@ COPY apple_dbaby.world ./src/turtlebot3_gazebo/models/
 COPY turtlebot3_burger.gazebo.xacro ./src/turtlebot3/turtlebot3_description/urdf
 
 # enable cuda
-RUN test -n CUDA_VERSION && echo "cuda = True" >> ./src/nn_agent/config.py || true
+# RUN test -n "${CUDA_VERSION}" && echo "cuda = True" >> ./src/nn_agent/config.py || true

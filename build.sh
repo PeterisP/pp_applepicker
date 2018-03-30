@@ -318,7 +318,7 @@ build_image() {
 	done
 
 	# copy other files at base_path
-	for src in project.launch apple_dbaby.world turtlebot3_burger.gazebo.xacro entrypoint.sh xorg.conf.nvidia-headless; do
+	for src in project.launch apple_dbaby.world turtlebot3_burger.gazebo.xacro entrypoint.sh xorg.conf.nvidia-headless lightop__init__.py; do
 		cp "$base_path/files/$src" "$output_directory/"
 	done
 
@@ -358,10 +358,23 @@ build_image() {
 		echo "RUN rm -r /etc/ros/rosdep/sources.list.d/20-default.list" >> "$output_dockerfile"
 		echo >> "$output_dockerfile"
 		update_dockerfile "$output_dockerfile" "$cache_directory/docker-ubuntu-vnc-desktop/Dockerfile"
+		echo "COPY lightop__init__.py /usr/lib/web/lightop/__init__.py" >> "$output_dockerfile"
+		echo >> "$output_dockerfile"
 		echo "RUN rm /etc/apt/sources.list.d/arc-theme.list*" >> "$output_dockerfile"
 		echo >> "$output_dockerfile"
 		echo "ENV VNC_DESKTOP 1" >> "$output_dockerfile"
 		echo >> "$output_dockerfile"
+		echo "RUN apt-get update && apt-get install -y xserver-xorg-core" >> "$output_dockerfile"
+		echo >> "$output_dockerfile"
+		if [ $nvidia_opengl -eq 1 ]; then
+			# disable Xvfb
+			sed -i 's#^command=/usr/bin/Xvfb.*$#command=/bin/true#' \
+				"$output_directory/image/etc/supervisor/conf.d/supervisord.conf"
+		else
+			# allow up to UHD resolution for Xvfb
+			sed -i 's#^command=/usr/bin/Xvfb.*$#command=/usr/bin/Xvfb :1 -screen 0 3840x2160x16#' \
+				"$output_directory/image/etc/supervisor/conf.d/supervisord.conf"
+		fi
 	fi
 	update_dockerfile "$output_dockerfile" "$base_path/dockerfiles/Dockerfile-gazebo"
 	
