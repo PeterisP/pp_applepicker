@@ -9,15 +9,16 @@ import torch.autograd as autograd
 from torch.autograd import Variable
 from torch.utils.data import TensorDataset, DataLoader
 
-try:
-    from config import cuda
-except ImportError:
-    cuda = False
+# try:
+#     from config import cuda
+# except ImportError:
+#     cuda = False
+cuda = False
 
 gamma, seed, batch = 0.99, 543, 1
 #D = 105*80
 D=60*80
-episode_length = 20
+episode_length = 40
 
 # valid_actions = ['i','j','l',',','p']
 valid_actions = ['i','j','l','p']
@@ -48,17 +49,23 @@ def prepro(I):
   # I[I == 192] = 0 # erase background (background type 2)   
   # I[I == 136] = 0 # erase background (background type 3)   
   # I[I != 0] = 1 # everything else (paddles, ball) just set to 1
-  I = (I-128)/128
+  I = (I-128.0)/12800.0
   # plt.imshow(I) 
   # plt.show()
   return I.astype(np.float).ravel() # 2D array to 1D array (vector)
 
 
 def run_episodic_learning(env_reset, env_step):
+    global cuda
     # init
     torch.manual_seed(seed)
     policy = Policy()
-    if cuda: policy.cuda()
+    try:
+        policy.cuda()
+        cuda = True
+        print('CUDA supported')
+    except:
+        pass
     optimizer = optim.RMSprop(policy.parameters(), lr=1e-3)
     # learning
     running_reward = None 
@@ -70,7 +77,7 @@ def run_episodic_learning(env_reset, env_step):
          
         for t in range(episode_length): # Don't infinite loop while learning
             cur_x = prepro(observation)   
-            state = cur_x - prev_x if prev_x is not None else np.zeros(D)   
+            state = cur_x # - prev_x if prev_x is not None else np.zeros(D)
             prev_x = cur_x  
 
             state = torch.from_numpy(state).float().unsqueeze(0)
