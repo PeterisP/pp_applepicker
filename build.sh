@@ -395,6 +395,13 @@ build_image() {
 	# [ $vnc_desktop -eq 1 ] && echo 'ENTRYPOINT ["/startup.sh"]' >> "$output_dockerfile" && echo >> "$output_dockerfile"
 	[ $vnc_desktop -eq 1 ] && echo 'CMD []' >> "$output_dockerfile" && echo >> "$output_dockerfile"
 
+	if [ $vnc_desktop -eq 1 ]; then
+		echo >> "$output_dockerfile"
+		echo "# copy turtlebot3 models" >> "$output_dockerfile"
+		echo "RUN mkdir -p /root/.gazebo/models" >> "$output_dockerfile"
+		echo "RUN cp -rv /root/apple_picking_robot/ros/src/turtlebot3_gazebo/models/* /root/.gazebo/models" >> "$output_dockerfile"
+	fi
+
 	# cleanup
 	if [ -n "$tmp_directory" ] && [ -d "$tmp_directory" ] && [ $tmp_directory_exists -eq 0 ]; then
 		rm -rf "$tmp_directory"

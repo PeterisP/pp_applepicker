@@ -19,6 +19,7 @@ RUN echo >> /root/.bashrc && echo "cd /root/apple_picking_robot/ros" >> /root/.b
 RUN echo >> /root/.bashrc && echo "source /opt/ros/\$ROS_DISTRO/setup.bash" >> /root/.bashrc
 RUN echo >> /root/.bashrc && echo "export ROS_IP=\$(hostname -I)" >> /root/.bashrc
 RUN echo >> /root/.bashrc && echo "export ROS_PACKAGE_PATH=/root/apple_picking_robot/ros:\$ROS_PACKAGE_PATH" >> /root/.bashrc
+RUN echo >> /root/.bashrc && echo "export TURTLEBOT3_MODEL=burger" >> /root/.bashrc
 
 COPY entrypoint.sh /
 
