@@ -377,6 +377,7 @@ build_image() {
 		fi
 	fi
 	update_dockerfile "$output_dockerfile" "$base_path/dockerfiles/Dockerfile-gazebo"
+	update_dockerfile "$output_dockerfile" "$base_path/dockerfiles/Dockerfile-pytorch"
 	
 	if [ $nvidia_opengl -eq 1 ]; then
 		update_dockerfile "$output_dockerfile" "$base_path/dockerfiles/Dockerfile-nvidia-headless"
