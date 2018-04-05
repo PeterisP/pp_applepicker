@@ -6,6 +6,7 @@ from geometry_msgs.msg import Twist
 from geometry_msgs.msg import Pose
 
 from std_srvs.srv import Empty
+from std_msgs.msg import UInt8
 from gazebo_msgs.srv import GetModelState
 from gazebo_msgs.srv import DeleteModel
 from gazebo_msgs.srv import SetModelState
@@ -48,6 +49,7 @@ class NNAgent(object):
         self.steps_to_stop = 0
         self.observe = True
         self.cmd_publisher = rospy.Publisher('cmd_vel', Twist, queue_size = 1)
+        self.bot_publisher = rospy.Publisher('bot', UInt8, queue_size = 1)
         self.turtlebot = Block('turtlebot3_burger','')
         self.bridge = CvBridge() # Convert ROS msg to numpy array
         self.image_array = None
@@ -170,7 +172,8 @@ class NNAgent(object):
                 elif key in moveBindings.keys():
                     x = moveBindings[key][0]
                     th = moveBindings[key][3]
-                print(key)
+                bot_action = botBindings[key]
+                print(key, bot_action)
                 twist = Twist()
                 twist.linear.x = x;
                 twist.linear.y = 0;
@@ -181,13 +184,15 @@ class NNAgent(object):
                 print(twist)
                 self.steps_to_stop = 4
                 self.cmd_publisher.publish(twist)
+                self.bot_publisher.publish(UInt8(bot_action))
 
         except Exception as e:
             print(e)
 
     def envstep(self, action):
         distance_before, _ = self.closest_apple()
-        print("Envstep runnning: '%s'" % action)
+        bot_action = ord(action)
+        print("Envstep runnning: '%s' / [%d]" % (action, bot_action))
         x = 0
         th = 0
         reward = 0
@@ -205,7 +210,8 @@ class NNAgent(object):
         twist.angular.y = 0;
         twist.angular.z = th
         self.steps_to_stop = 4
-        self.cmd_publisher.publish(twist)  
+        self.cmd_publisher.publish(twist)
+        self.bot_publisher.publish(UInt8(bot_action))
         observation = self.get_observation()        
         distance_after, _ = self.closest_apple()  
         # reward = reward + distance_before - distance_after
