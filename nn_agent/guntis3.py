@@ -8,6 +8,7 @@ import torch.optim as optim
 import torch.autograd as autograd
 from torch.autograd import Variable
 from torch.utils.data import TensorDataset, DataLoader
+import os
 
 # try:
 #     from config import cuda
@@ -60,6 +61,9 @@ def run_episodic_learning(env_reset, env_step):
     # init
     torch.manual_seed(seed)
     policy = Policy()
+    if os.path.isfile('apple_checkpoint'):
+        print('Loading model state')
+        policy.load_state_dict(torch.load('apple_checkpoint'))
     try:
         policy.cuda()
         cuda = True
@@ -130,3 +134,6 @@ def run_episodic_learning(env_reset, env_step):
             del policy.rewards[:]
             del policy.saved_actions[:]
 
+            print('Saving model state')
+            torch.save(policy.state_dict(), 'apple_checkpoint')
+            print('Model state saved')
