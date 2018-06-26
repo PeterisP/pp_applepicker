@@ -325,6 +325,8 @@ build_image() {
 	if [ $vnc_desktop -eq 1 ]; then
 		if [ ! -d "$cache_directory/docker-ubuntu-vnc-desktop" ]; then
 			$(cd "$cache_directory" ; git clone https://github.com/ct2034/docker-ubuntu-vnc-desktop.git --depth=1)
+			# patch Dockerfile: remove specific ROS version constraint
+			sed -e 's/\(ros-kinetic-.*\)=[^ ]*/\1/' -i "$cache_directory/docker-ubuntu-vnc-desktop/Dockerfile"
 		# else
 		# 	$(cd "$cache_directory/docker-ubuntu-vnc-desktop"; git pull)
 		fi
